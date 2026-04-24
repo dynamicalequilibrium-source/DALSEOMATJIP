@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "Restaurant": {
+      "title": "Restaurant",
+      "description": "Details about a restaurant.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "reviewsCount": { "type": "number" },
+        "rating": { "type": "number" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "isAiPick": { "type": "boolean" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "location"]
+    },
+    "Trend": {
+      "title": "Trend",
+      "description": "Trending status of a restaurant.",
+      "type": "object",
+      "properties": {
+        "restaurantId": { "type": "string" },
+        "name": { "type": "string" },
+        "reason": { "type": "string" },
+        "trendDirection": { "type": "string", "enum": ["up", "stable", "down"] },
+        "score": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["restaurantId", "name", "reason"]
+    }
+  },
+  "firestore": {
+    "restaurants": {
+      "schema": "Restaurant",
+      "description": "Collection of crawled restaurants."
+    },
+    "trends": {
+      "schema": "Trend",
+      "description": "Collection of daily trends."
+    }
+  }
+}
