@@ -1,21 +1,24 @@
 import os
 import sys
+import traceback
 import google.generativeai as genai
 
 def run_agent():
     # 1. 환경 설정 (GitHub Secrets에서 주입)
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("Error: GEMINI_API_KEY environment variable not found.")
+        print("==============================================")
+        print("[오류] GEMINI_API_KEY 환경 변수를 찾을 수 없습니다.")
+        print("GitHub Repository > Settings > Secrets and variables > Actions 에 GEMINI_API_KEY를 등록했는지 확인해주세요.")
+        print("==============================================")
         sys.exit(1)
         
     genai.configure(api_key=api_key)
     
-    # 2. 모델 설정 (최신 모델 사용 권장)
-    model = genai.GenerativeModel('gemini-2.5-pro')
+    # 2. 모델 설정 (안정성이 검증된 gemini-1.5-pro로 변경)
+    model = genai.GenerativeModel('gemini-1.5-pro')
 
     # 3. 데이터 수집 단계 (Mock Data)
-    # 추후 이전 스텝에서 논의한 playwright 크롤러(naver_crawler.py)를 통합하여 실제 데이터를 가져오도록 합니다.
     raw_data = """
     1. 달서구 상인동 '강철돼지': 고기가 아주 두툼하고 육즙이 넘칩니다. 지방이 적은 목살이 예술입니다. 가게 앞 주차장은 3대만 가능해서 조금 좁아요. 사장님이 운동하는 분인지 친절하게 식단 팁도 줍니다.
     2. 달서구 진천동 '영양가득 칼국수': 비 오는 날 먹기 좋음. 닭가슴살 고명이 산처럼 쌓여 나옴. 매장 뒤 공영주차장 지원되어 주차 아주 편함. 영수증 리뷰 보면 찐 단골이 많은 듯.
@@ -47,10 +50,9 @@ def run_agent():
         print("==============================================\n")
         print(response.text)
         
-        # TODO: 분석된 마크다운 결과(response.text)를 이메일 또는 텔레그램 API로 전송하는 로직 추가
-        
     except Exception as e:
-        print(f"[Error] Gemini API 호출 실패: {e}")
+        print("\n[오류] Gemini API 호출 중 문제가 발생했습니다:")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
