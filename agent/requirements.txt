@@ -1,0 +1,4 @@
+google-generativeai>=0.4.0
+# 필요시 크롤링 및 알림 라이브러리 추가
+# playwright==1.42.0
+# requests==2.31.0
