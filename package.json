@@ -12,7 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.34.0",
+    "@anthropic-ai/sdk": "^0.104.0",
     "@firebase/eslint-plugin-security-rules": "^0.0.2",
     "@vitejs/plugin-react": "^5.0.4",
     "@tailwindcss/vite": "^4.1.14",
