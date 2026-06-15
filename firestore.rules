@@ -2,66 +2,46 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Global Safety Net
+
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Primitives
-    function isValidId(id) { 
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
     function isSignedIn() { return request.auth != null; }
-
-    // Admin validation (mocked for simplicity, assuming a dedicated admin collection)
-    function isAdmin() { 
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); 
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Validation Blueprints
-    function isValidRestaurant(data) {
-      return data.keys().hasAll(['name', 'location']) &&
-             data.name is string && data.name.size() <= 100 &&
-             data.location is string && data.location.size() <= 100 &&
-             (!('reviewsCount' in data) || data.reviewsCount is number) &&
-             (!('rating' in data) || data.rating is number) &&
-             (!('tags' in data) || (data.tags is list && data.tags.size() <= 10)) &&
-             (!('isAiPick' in data) || data.isAiPick is bool) &&
-             (!('imageUrl' in data) || data.imageUrl is string) &&
-             (!('createdAt' in data) || data.createdAt is timestamp) &&
-             (!('updatedAt' in data) || data.updatedAt is timestamp);
-    }
-
-    function isValidTrend(data) {
-      return data.keys().hasAll(['restaurantId', 'name', 'reason']) &&
-             data.restaurantId is string && data.restaurantId.size() <= 128 &&
-             data.name is string && data.name.size() <= 100 &&
-             data.reason is string && data.reason.size() <= 200 &&
-             (!('trendDirection' in data) || (data.trendDirection is string && data.trendDirection in ['up', 'stable', 'down'])) &&
-             (!('score' in data) || data.score is number) &&
-             (!('createdAt' in data) || data.createdAt is timestamp) &&
-             (!('updatedAt' in data) || data.updatedAt is timestamp);
-    }
-
+    // ── 식당 컬렉션 (크롤러 + 에이전트가 쓰고, 앱이 읽는다) ──────────────
     match /restaurants/{restaurantId} {
-      allow read: if true; // Publicly readable dashboard
-      allow create: if isAdmin() && isValidId(restaurantId) && isValidRestaurant(incoming()) && incoming().createdAt == request.time;
-      allow update: if isAdmin() && isValidId(restaurantId) && isValidRestaurant(incoming()) && incoming().updatedAt == request.time;
-      allow delete: if isAdmin() && isValidId(restaurantId);
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(restaurantId);
+      allow update: if isAdmin() && isValidId(restaurantId);
+      allow delete: if isAdmin();
     }
 
+    // ── 트렌드 컬렉션 ────────────────────────────────────────────────────────
     match /trends/{trendId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidId(trendId) && isValidTrend(incoming()) && incoming().createdAt == request.time;
-      allow update: if isAdmin() && isValidId(trendId) && isValidTrend(incoming()) && incoming().updatedAt == request.time;
-      allow delete: if isAdmin() && isValidId(trendId);
+      allow create, update: if isAdmin() && isValidId(trendId);
+      allow delete: if isAdmin();
     }
 
+    // ── AI 브리핑 (날짜별 1개) ──────────────────────────────────────────────
+    match /briefings/{date} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── 어드민 ──────────────────────────────────────────────────────────────
     match /admins/{adminId} {
       allow read: if isSignedIn() && request.auth.uid == adminId;
-      allow write: if false; // Only manageable from Firebase Console
+      allow write: if false;
     }
   }
 }

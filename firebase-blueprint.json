@@ -2,48 +2,85 @@
   "entities": {
     "Restaurant": {
       "title": "Restaurant",
-      "description": "Details about a restaurant.",
+      "description": "달서구 맛집 기본 정보 + 크롤링 지표",
       "type": "object",
       "properties": {
-        "name": { "type": "string" },
-        "location": { "type": "string" },
-        "reviewsCount": { "type": "number" },
-        "rating": { "type": "number" },
-        "tags": {
-          "type": "array",
-          "items": { "type": "string" }
+        "name":           { "type": "string" },
+        "dong":           { "type": "string", "description": "달서구 행정동 (상인동, 감삼동 등)" },
+        "location":       { "type": "string" },
+        "placeId":        { "type": "string", "description": "네이버 플레이스 ID" },
+        "rating":         { "type": "number" },
+        "reviewCount":    { "type": "number" },
+        "saveCount":      { "type": "number", "description": "네이버 저장 수 (트렌드 핵심 지표)" },
+        "photoCount":     { "type": "number" },
+        "blogCountNaver": { "type": "number" },
+        "keywords":       { "type": "array", "items": { "type": "string" } },
+        "blogMentions": {
+          "type": "object",
+          "properties": {
+            "days7":  { "type": "number" },
+            "days30": { "type": "number" },
+            "days90": { "type": "number" }
+          }
         },
-        "isAiPick": { "type": "boolean" },
-        "imageUrl": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "trendScore":      { "type": "number", "description": "AI 계산 트렌드 지수 0~100" },
+        "trendDirection":  { "type": "string", "enum": ["up", "stable", "down"] },
+        "trendLabel":      { "type": "string" },
+        "authenticityFlag": { "type": "boolean", "description": "광고 리뷰 의심 여부" },
+        "isNew":           { "type": "boolean", "description": "최근 30일 내 오픈" },
+        "isAiPick":        { "type": "boolean" },
+        "aiAnalysis":      { "type": "string", "description": "Claude 분석 코멘트" },
+        "category":        { "type": "string" },
+        "imageUrl":        { "type": "string" },
+        "naverUrl":        { "type": "string" },
+        "createdAt":       { "type": "string", "format": "date-time" },
+        "updatedAt":       { "type": "string", "format": "date-time" }
       },
-      "required": ["name", "location"]
+      "required": ["name", "dong"]
     },
     "Trend": {
       "title": "Trend",
-      "description": "Trending status of a restaurant.",
+      "description": "일별 트렌드 스냅샷",
       "type": "object",
       "properties": {
-        "restaurantId": { "type": "string" },
-        "name": { "type": "string" },
-        "reason": { "type": "string" },
+        "restaurantId":   { "type": "string" },
+        "name":           { "type": "string" },
+        "dong":           { "type": "string" },
+        "score":          { "type": "number" },
         "trendDirection": { "type": "string", "enum": ["up", "stable", "down"] },
-        "score": { "type": "number" },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "reason":         { "type": "string" },
+        "createdAt":      { "type": "string", "format": "date-time" },
+        "updatedAt":      { "type": "string", "format": "date-time" }
       },
       "required": ["restaurantId", "name", "reason"]
+    },
+    "Briefing": {
+      "title": "Briefing",
+      "description": "Claude AI 데일리 브리핑 (날짜별 1개)",
+      "type": "object",
+      "properties": {
+        "date":       { "type": "string", "description": "YYYY-MM-DD" },
+        "briefing":   { "type": "string", "description": "전체 브리핑 마크다운" },
+        "hotReport":  { "type": "string" },
+        "newReport":  { "type": "string" },
+        "authReport": { "type": "string" },
+        "createdAt":  { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "briefing"]
     }
   },
   "firestore": {
     "restaurants": {
       "schema": "Restaurant",
-      "description": "Collection of crawled restaurants."
+      "description": "달서구 맛집 마스터 컬렉션 (placeId를 문서 ID로 사용)"
     },
     "trends": {
       "schema": "Trend",
-      "description": "Collection of daily trends."
+      "description": "트렌드 스냅샷 (식당 ID를 문서 ID로 사용, 매일 덮어씀)"
+    },
+    "briefings": {
+      "schema": "Briefing",
+      "description": "AI 데일리 브리핑 (날짜를 문서 ID로 사용: 2025-01-15)"
     }
   }
 }

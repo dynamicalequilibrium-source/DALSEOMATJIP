@@ -1,0 +1,28 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Netlify Functions → /api/* 라우팅
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+# SPA — 그 외 모든 경로는 index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production.environment]
+  VITE_ENV = "production"
+
+[context.deploy-preview.environment]
+  VITE_ENV = "preview"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

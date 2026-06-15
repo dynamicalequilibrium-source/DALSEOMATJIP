@@ -1,0 +1,69 @@
+name: 달서맛집 데일리 AI 에이전트
+
+on:
+  schedule:
+    # 매일 오전 9시 KST (UTC 00:00)
+    - cron: "0 0 * * *"
+    # 매일 오후 6시 KST (UTC 09:00) — 저녁 추천 업데이트
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "실행 타겟 (agent / crawler / all)"
+        required: false
+        default: "all"
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  FIREBASE_CRED_PATH: /tmp/serviceAccountKey.json
+
+jobs:
+  crawl:
+    name: 네이버 크롤링
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.target != 'agent' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Firebase 서비스 계정 키 복원
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/serviceAccountKey.json
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 크롤러 의존성 설치
+        working-directory: crawler
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: 네이버 플레이스 + 블로그 크롤링
+        working-directory: crawler
+        run: python naver_crawler.py --target all --cred $FIREBASE_CRED_PATH
+
+  analyze:
+    name: Claude AI 분석
+    runs-on: ubuntu-latest
+    needs: [crawl]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Firebase 서비스 계정 키 복원
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/serviceAccountKey.json
+
+      - name: Python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 에이전트 의존성 설치
+        working-directory: agent
+        run: pip install -r requirements.txt
+
+      - name: 데일리 브리핑 + 트렌드 분석 실행
+        working-directory: agent
+        run: python main.py
